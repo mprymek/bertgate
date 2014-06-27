@@ -83,6 +83,39 @@ Async call:
 >>> service.request('cast').Bert.ping()
 ```
 
+RPC Connection Manager
+----------------------
+Manages connections to :rpc and BertGate servers. When network error occur, the connection is automatically
+reconnected using stored options.
+
+Server:
+```
+# iex -pa _build/dev/lib/bert_gate/ebin/ -pa _build/dev/lib/ranch/ebin --sname server
+[...]
+iex(server@mydomain)1> BertGate.Server.start_link
+[NOTIC] BertGate server listening on port 9484 with 20 acceptors
+```
+
+Client:
+```
+# iex -pa _build/dev/lib/bert_gate/ebin/ --sname client
+[...]
+iex(client@mydomain)1> Rpc.start_link
+{:ok, #PID<0.49.0>}
+iex(client@mydomain)3> Rpc.add_bert_server :local_bert, "localhost"
+[NOTIC] BERT: connecting to localhost:9484
+:ok
+iex(client@mydomain)4> Rpc.call :local_bert, :'Bert', :ping
+:pong
+iex(client@mydomain)6> Rpc.add_rpc_node :local_rpc, :server@mydomain
+[NOTIC] RPC: connecting to server@mydomain
+:ok
+iex(client@mydomain)7> Rpc.call :local_rpc, BertGate.Modules.Bert, :ping
+:pong
+```
+
+
+
 Performance
 -----------
 
