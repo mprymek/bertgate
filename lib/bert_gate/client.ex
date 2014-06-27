@@ -43,7 +43,7 @@ defmodule BertGate.Client do
             :gen_tcp.close socket
             raise BERTClosed
          {:error,any} ->
-            Lager.error "BERT: error: #{inspect(any)}"
+            BertGate.Logger.error "BERT: error: #{inspect(any)}"
             :gen_tcp.close socket
             raise "BERT recv error: #{inspect(any)}"
       end
