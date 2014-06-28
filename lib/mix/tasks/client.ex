@@ -1,10 +1,8 @@
-defmodule Mix.Tasks.Server do
+defmodule Mix.Tasks.Client do
   use Mix.Task
 
   def run([]) do
-     BertGate.Server.init [%{}]
-     receive do
-     end
+     Rpc.start_link
   end
 end
 

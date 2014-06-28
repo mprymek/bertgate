@@ -1,20 +1,25 @@
 defmodule BertGate.Client do
-   def connect(host,port\\9484) do
+   def connect(host,options\\%{}) do
+      port = Map.get(options,:port,9484)
+      BertGate.Logger.info "Connecting to #{inspect host}:#{port}"
       case :gen_tcp.connect(bitstring_to_list(host), port, [:binary,{:packet,4},{:active, false}]) do
          {:ok, socket} -> socket
          {:error, err} -> raise NetworkError, error: err
       end
    end
 
-   def call(socket,mod,fun,args,timeout\\5000) do
+   def call(socket,mod,fun,args\\[],timeout\\5000) do
       :ok = send_packet(socket,{:call,mod,fun,args})
       recv_packet(socket,timeout)
    end
 
-   def cast(socket,mod,fun,args,timeout) do
+   def cast(socket,mod,fun,args\\[]) do
       :ok = send_packet(socket,{:cast,mod,fun,args})
       :ok
    end
+
+   def auth(socket,token), do:
+      call(socket,:'Auth',:auth,[token])
 
    # @TODO: info not implemented
 
@@ -33,9 +38,11 @@ defmodule BertGate.Client do
          {:ok,data} ->
             case Bert.decode(data) do
                {:reply,reply} -> reply
-               {:exception, err} -> raise err
-               {:error, {_type, _code, _class, _detail, _backtrace}=err} ->
-                  raise BERTError, details: err
+               # exception raised by user function
+               {:error,{:user,601,_,err,_}} ->
+                  raise err
+               {:error, {type, code, class, detail, backtrace}=err} ->
+                  raise BERTError, type: type, code: code, class: class, detail: detail, backtrace: backtrace
                any ->
                   raise "Bad reply: #{inspect(any)}"
             end

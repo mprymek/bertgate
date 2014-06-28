@@ -73,9 +73,12 @@ defmodule Rpc do
     Agent.get(__MODULE__,fn %State{names: names} -> names[name] end)
 
   defp connect({:bert,_,name,host,options}) do
-    port = Map.get(options,:port,9484)
-    BertGate.Logger.notice "BERT: connecting to #{host}:#{port}"
-    conn = BertGate.Client.connect(host)
+    conn = BertGate.Client.connect(host,options)
+    case options[:auth] do
+       nil -> :ok
+       token ->
+          :ok = BertGate.Client.auth(conn,token)
+    end
     Agent.update(__MODULE__, fn state=%State{names: names} ->
       val = {:bert,conn,name,host,options}
       names = names
@@ -89,7 +92,7 @@ defmodule Rpc do
   end
 
   defp connect({:rpc,node,name}) do
-    BertGate.Logger.notice "RPC: connecting to #{node}"
+    BertGate.Logger.info "RPC: connecting to #{node}"
     ret = Node.connect(node)
     if ret != true do
       raise NetworkError, error: {:connect_return,ret}
