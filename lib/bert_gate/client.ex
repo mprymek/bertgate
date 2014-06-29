@@ -2,7 +2,7 @@ defmodule BertGate.Client do
    def connect(host,options\\%{}) do
       port = Map.get(options,:port,9484)
       BertGate.Logger.info "Connecting to #{inspect host}:#{port}"
-      case :gen_tcp.connect(bitstring_to_list(host), port, [:binary,{:packet,4},{:active, false}]) do
+      case :gen_tcp.connect(String.to_char_list(host), port, [:binary,{:packet,4},{:active, false}]) do
          {:ok, socket} -> socket
          {:error, err} -> raise NetworkError, error: err
       end
