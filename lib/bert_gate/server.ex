@@ -17,6 +17,7 @@ defmodule BertGate.Modules.Bert do
 end
 
 defmodule BertGate.Server do
+   require Logger
    use GenServer
 
    def start_link(options\\%{}), do: :gen_server.start_link({:local,__MODULE__}, __MODULE__, [options], [])
@@ -30,8 +31,8 @@ defmodule BertGate.Server do
       allowed = Map.get(options,:public,[:'Bert'])
       authenticator = Map.get(options,:authenticator,fn _,_,_ -> nil end)
       acceptors_num = Map.get(options,:acceptors_num,20)
-      BertGate.Logger.notice "BertGate server listening on port #{port} with #{acceptors_num} acceptors"
-      BertGate.Logger.notice "Public modules: #{inspect allowed}"
+      Logger.info "BertGate server listening on port #{port} with #{acceptors_num} acceptors"
+      Logger.info "Public modules: #{inspect allowed}"
       :ranch.start_listener(:bert_gate_server, acceptors_num, :ranch_tcp,
           [{:port, port}], BertGate.Server.Proto, %{allowed: allowed, authenticator: authenticator})
    end
@@ -42,6 +43,7 @@ defmodule BertGate.Server.Proto.State do
 end
 
 defmodule BertGate.Server.Proto do
+   require Logger
    alias BertGate.Server.Proto.State
 
    def start_link(ref, socket, transport, opts) do
@@ -53,20 +55,20 @@ defmodule BertGate.Server.Proto do
    def init(state) do
       :ok = :ranch.accept_ack(state.ref)
       {:ok,{host,port}} = state.transport.peername(state.socket)
-      BertGate.Logger.info "Client connected: #{inspect host}:#{port}"
+      Logger.info "Client connected: #{inspect host}:#{port}"
       state = %State{state|client: {host,port}}
       loop(state)
    end
 
    defp check_auth(state=%State{},type,mod) do
       if not mod in state.allowed do
-         BertGate.Logger.warning "Client #{inspect state.client} unauthorized for #{type}:#{mod}"
+         Logger.warn "Client #{inspect state.client} unauthorized for #{type}:#{mod}"
          close(state,401,"Unauthorized.")
       end
    end
 
    defp close(state,code,message) do
-      BertGate.Logger.warning "BERTError: client=#{inspect state.client} code=#{code} message: #{message}"
+      Logger.warn "BERTError: client=#{inspect state.client} code=#{code} message: #{message}"
       reply = {:error,{:protocol,code,"BERTError",message<>" Closing connection.",[]}}
       send_packet(state.transport,state.socket,reply)
       state.transport.close state.socket
@@ -77,7 +79,7 @@ defmodule BertGate.Server.Proto do
       case receive_packet(state.transport,state.socket) do
          {:cast, mod, fun, args} when is_atom(mod) and is_atom(fun) and is_list(args) ->
             check_auth(state,:cast,mod)
-            BertGate.Logger.debug "CAST: #{mod}.#{fun} #{inspect args}"
+            Logger.debug "CAST: #{mod}.#{fun} #{inspect args}"
             spawn(fn -> jailed_apply(mod,fun,state.auth_data,args) end)
             send_packet(state.transport,state.socket,{:noreply})
             loop(state)
@@ -89,13 +91,13 @@ defmodule BertGate.Server.Proto do
                {new_allowed,auth_data} when is_list(new_allowed) ->
                   # remove duplicates
                   allowed = (state.allowed++new_allowed) |> Enum.uniq
-                  BertGate.Logger.info "Client #{inspect state.client} now authorized for #{inspect allowed}"
+                  Logger.info "Client #{inspect state.client} now authorized for #{inspect allowed}"
                   send_packet(state.transport,state.socket,{:reply,:ok})
                   loop(%State{state|allowed: allowed, auth_data: auth_data})
             end
          {:call, mod, fun, args} when is_atom(mod) and is_atom(fun) and is_list(args) ->
             check_auth(state,:call,mod)
-            BertGate.Logger.debug "CALL: #{mod}.#{fun} #{inspect args}"
+            Logger.debug "CALL: #{mod}.#{fun} #{inspect args}"
             reply = jailed_apply(mod,fun,state.auth_data,args)
             send_packet(state.transport,state.socket,reply)
             loop(state)
@@ -105,12 +107,12 @@ defmodule BertGate.Server.Proto do
          #{:info, :cache, [{:access, access}, {:validation, token}]}
          #{:info, :stream, []}
          {:info, command, options} when is_atom(command) and is_list(options) ->
-            BertGate.Logger.debug "INFO: #{command} #{inspect options} [NOT IMPLEMENTED]"
+            Logger.debug "INFO: #{command} #{inspect options} [NOT IMPLEMENTED]"
             reply = {:error,{:protocol,501,"BERTError","Info messages not implemented.",[]}}
             send_packet(state.transport,state.socket,reply)
             loop(state)
          x ->
-            BertGate.Logger.error  "BERT: unexpected message: #{inspect(x)}"
+            Logger.error  "BERT: unexpected message: #{inspect(x)}"
             close(state,400,"Unexpected message.")
       end
    end
@@ -147,7 +149,7 @@ defmodule BertGate.Server.Proto do
             case bytes-byte_size(data) do
                0 -> data
                n when n<0 ->
-                  BertGate.Logger.error "INTERNAL ERROR: #{bytes}B wanted, #{bytes-n}B received. This should not happen. PANIC"
+                  Logger.error "INTERNAL ERROR: #{bytes}B wanted, #{bytes-n}B received. This should not happen. PANIC"
                   exit(:bad_recv_data_len)
                n ->
                   # NOTE: we use the _same_ timeout here. No calculation of the remaining time is done!
@@ -158,7 +160,7 @@ defmodule BertGate.Server.Proto do
             transport.close socket
             exit(:normal)
          {:error,any} ->
-            BertGate.Logger.error "BERT: error: #{inspect(any)}"
+            Logger.error "BERT: error: #{inspect(any)}"
             exit(:bert_error)
       end
    end
@@ -169,7 +171,7 @@ defmodule BertGate.Server.Proto do
       case transport.send(socket,<<payload_size::size(32),payload::binary>>) do
          :ok -> :ok
          {:error,err} ->
-            BertGate.Logger.error "send_packet error: #{err}"
+            Logger.error "send_packet error: #{err}"
             exit(:send_error)
       end
    end

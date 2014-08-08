@@ -4,7 +4,7 @@ defmodule BertGate.Mixfile do
   def project do
     [app: :bert_gate,
      version: "0.1.0",
-     elixir: "~> 0.14.1",
+     elixir: "~> 0.15.0",
      deps: deps]
   end
 

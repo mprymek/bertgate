@@ -1,7 +1,9 @@
 defmodule BertGate.Client do
+   require Logger
+
    def connect(host,options\\%{}) do
       port = Map.get(options,:port,9484)
-      BertGate.Logger.info "Connecting to #{inspect host}:#{port}"
+      Logger.info "Connecting to #{inspect host}:#{port}"
       case :gen_tcp.connect(String.to_char_list(host), port, [:binary,{:packet,4},{:active, false}]) do
          {:ok, socket} -> socket
          {:error, err} -> raise NetworkError, error: err
@@ -50,7 +52,7 @@ defmodule BertGate.Client do
             :gen_tcp.close socket
             raise BERTClosed
          {:error,any} ->
-            BertGate.Logger.error "BERT: error: #{inspect(any)}"
+            Logger.error "BERT: error: #{inspect(any)}"
             :gen_tcp.close socket
             raise "BERT recv error: #{inspect(any)}"
       end

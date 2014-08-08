@@ -13,6 +13,7 @@ defmodule Rpc.State do
 end
 
 defmodule Rpc do
+  require Logger
   alias Rpc.State
 
   def start_link do
@@ -29,7 +30,7 @@ defmodule Rpc do
     :ok
   end
 
-  def call(name,mod,fun,args\\[],timeout\\5000) do
+  def call(name,mod,fun,args\\[],timeout\\5000) when is_atom(mod) and is_atom(fun) and is_list(args) do
     case connection(name) do
       nil -> raise KeyError, [key: name, term: "servers list"]
       cdef={:rpc,node,_} ->
@@ -92,7 +93,7 @@ defmodule Rpc do
   end
 
   defp connect({:rpc,node,name}) do
-    BertGate.Logger.info "RPC: connecting to #{node}"
+    Logger.info "RPC: connecting to #{node}"
     ret = Node.connect(node)
     if ret != true do
       raise NetworkError, error: {:connect_return,ret}
