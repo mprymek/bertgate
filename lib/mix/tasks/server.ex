@@ -8,7 +8,7 @@ defmodule Mix.Tasks.Server do
   end
 end
 
-defmodule Mix.Tasks.Ping do
+defmodule Mix.Tasks.ServerPing do
   use Mix.Task
 
   def run([]) do

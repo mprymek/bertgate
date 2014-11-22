@@ -6,7 +6,7 @@ defmodule Mix.Tasks.Client do
   end
 end
 
-defmodule Mix.Tasks.Ping do
+defmodule Mix.Tasks.ClientPing do
   use Mix.Task
 
   def run([]) do
