@@ -4,7 +4,7 @@ defmodule BertGate.Mixfile do
   def project do
     [app: :bert_gate,
      version: "0.1.0",
-     elixir: "~> 0.15.0",
+     elixir: "~> 1.0.0",
      deps: deps]
   end
 
@@ -25,6 +25,6 @@ defmodule BertGate.Mixfile do
   #
   # Type `mix help deps` for more examples and options
   defp deps, do: [
-      { :ranch, github: "extend/ranch", ref: "3189ef2d47843945efc96c224963380462c33d40" },
+      { :ranch, "1.0.0" },
   ]
 end
