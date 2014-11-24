@@ -84,7 +84,7 @@ defmodule Rpc do
       val = {:bert,conn,name,host,options}
       names = names
         |> Map.update(name,val,fn {:bert,oldconn,_name,_host,_options} ->
-          :gen_tcp.close oldconn
+          BertGate.Client.close(oldconn)
           val
         end)
       %State{state|names: names}

@@ -1,29 +1,93 @@
+defmodule BertGate.Client.State do
+  defstruct host: nil, port: nil, socket: nil
+end
+
+############################################################################
+# api
+
 defmodule BertGate.Client do
    require Logger
+   alias BertGate.Client.State
 
    def connect(host,options\\%{}) do
       port = Map.get(options,:port,9484)
       Logger.info "Connecting to #{inspect host}:#{port}"
       case :gen_tcp.connect(String.to_char_list(host), port, [:binary,{:packet,4},{:active, false}]) do
-         {:ok, socket} -> socket
+         {:ok, socket} ->
+           {:ok, pid} = GenServer.start_link(BertGate.Client.Impl, %State{host: host, port: port, socket: socket})
+           pid
          {:error, err} -> raise NetworkError, error: err
       end
    end
 
-   def call(socket,mod,fun,args\\[],timeout\\5000) do
+   def call(pid,mod,fun,args\\[],timeout\\5000) do
+      res = GenServer.call(pid, {:call,mod,fun,args,timeout})
+      case res do
+         {:result,r} -> r
+         {:exception,e} -> raise e
+      end
+   end
+
+   def cast(pid,mod,fun,args\\[]) do
+      res = GenServer.call(pid, {:cast,mod,fun,args})
+      case res do
+         {:result,r} -> r
+         {:exception,e} -> raise e
+      end
+   end
+
+   def auth(pid,token), do:
+      call(pid,:'Auth',:auth,[token])
+
+   def close(pid), do:
+      GenServer.call(pid, :close)
+
+   # @TODO: info not implemented
+
+end
+
+############################################################################
+# implementation
+
+defmodule BertGate.Client.Impl do
+   require Logger
+   use GenServer
+   alias BertGate.Client.State
+
+   def handle_call({:call,mod,fun,args,timeout},_,s=%State{socket: socket}) do
+      res = try do
+        res = call_(socket,mod,fun,args,timeout)
+        {:result,res}
+      rescue
+        e -> {:exception,e}
+      end
+      {:reply,res,s}
+   end
+
+   def handle_call({:cast,mod,fun,args},_,s=%State{socket: socket}) do
+      res = try do
+        cast_(socket,mod,fun,args)
+        {:result, :ok}
+      rescue
+        e -> {:exception,e}
+      end
+      {:reply,res,s}
+   end
+
+   def handle_call(:close,_,s=%State{socket: socket}) do
+      res = :gen_tcp.close socket
+      {:reply,res,%State{s|socket: nil}}
+   end
+
+   defp call_(socket,mod,fun,args,timeout) do
       :ok = send_packet(socket,{:call,mod,fun,args})
       recv_packet(socket,timeout)
    end
 
-   def cast(socket,mod,fun,args\\[]) do
+   defp cast_(socket,mod,fun,args\\[]) do
       :ok = send_packet(socket,{:cast,mod,fun,args})
       :ok
    end
-
-   def auth(socket,token), do:
-      call(socket,:'Auth',:auth,[token])
-
-   # @TODO: info not implemented
 
    # NOTE: packet length is automatically inserted by gen_tcp due to the {:packet,4} option
    defp send_packet(socket,data) do
