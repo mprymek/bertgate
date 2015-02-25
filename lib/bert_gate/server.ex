@@ -126,7 +126,10 @@ defmodule BertGate.Server.Proto do
          # NOTE: we send back exceptions also (little intentional BERT-RPC specification violation)
          err ->
             #{:error,{:user,601,Map.get(err,:__struct__),err.message,err}}
-            {:error,{:user,601,Map.get(err,:__struct__),err,[]}}
+            error_trace = System.stacktrace
+            Logger.error Exception.format_stacktrace error_trace
+            # {:error,{:user,601,Map.get(err,:__struct__),err,[]}}
+            {:error, {:user, 601, Map.get(err,:__struct__), err, error_trace |> Enum.map &Exception.format_stacktrace_entry(&1)}}
          #err in UndefinedFunctionError ->
          #   {:error,{:protocol,404,"BERTError",inspect(err),[]}}
          #err ->
