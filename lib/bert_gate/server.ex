@@ -28,7 +28,7 @@ defmodule BertGate.Server do
    def init([options]) when is_map(options) do
       :ok = Application.ensure_started :ranch
       port = Map.get(options,:port,9484)
-      allowed = Map.get(options,:public,[:'Bert'])
+      allowed = Map.get(options, :public, Application.get_env(:bertgate, :public) || [:'Bert']) 
       authenticator = Map.get(options,:authenticator,fn _,_,_ -> nil end)
       acceptors_num = Map.get(options,:acceptors_num,20)
       Logger.info "BertGate server listening on port #{port} with #{acceptors_num} acceptors"
