@@ -28,7 +28,7 @@ defmodule BertGate.Server do
    def init([options]) when is_map(options) do
       :ok = Application.ensure_started :ranch
       port = Map.get(options,:port,9484)
-      allowed = Map.get(options, :public, Application.get_env(:bertgate, :public) || [:'Bert']) 
+      allowed = Map.get(options, :public, Application.get_env(:bertgate, :public) || [:'Bert'])
       authenticator = Map.get(options,:authenticator,fn _,_,_ -> nil end)
       acceptors_num = Map.get(options,:acceptors_num,20)
       Logger.info "BertGate server listening on port #{port} with #{acceptors_num} acceptors"
@@ -127,9 +127,10 @@ defmodule BertGate.Server.Proto do
          err ->
             #{:error,{:user,601,Map.get(err,:__struct__),err.message,err}}
             error_trace = System.stacktrace
-            Logger.error inspect(err) <> "\n" <> Exception.format_stacktrace(error_trace)
+            Logger.error "#{Map.get(err,:__struct__)}: #{Map.get(err,:__message__)}\n#{Exception.format_stacktrace(error_trace)}"
             # {:error,{:user,601,Map.get(err,:__struct__),err,[]}}
-            {:error, {:user, 601, Map.get(err,:__struct__), err, error_trace |> Enum.map &Exception.format_stacktrace_entry(&1)}}
+            # {:error, {:user, 601, Map.get(err,:__struct__), err, error_trace |> Enum.map &Exception.format_stacktrace_entry(&1)}}
+            {:error, {:user, 601, Map.get(err,:__struct__), "#{Map.get(err,:__struct__)}: #{Map.get(err,:__message__)}\n#{Exception.format_stacktrace(error_trace)}", []}}
          #err in UndefinedFunctionError ->
          #   {:error,{:protocol,404,"BERTError",inspect(err),[]}}
          #err ->
@@ -148,7 +149,7 @@ defmodule BertGate.Server.Proto do
    defp recv(transport,socket,bytes,timeout) do
       case transport.recv(socket,bytes,timeout) do
          {:ok,data} ->
-            # @TODO: do we really need to check the size of returned data? Didn't transport already check it? 
+            # @TODO: do we really need to check the size of returned data? Didn't transport already check it?
             case bytes-byte_size(data) do
                0 -> data
                n when n<0 ->
