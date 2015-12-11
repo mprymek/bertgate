@@ -22,6 +22,8 @@ end
 defmodule Mix.Tasks.SpeedTest do
    use Mix.Task
 
+   @shortdoc "Run BERTGate speed test"
+
    def run([server]) do
       IO.puts "**** BertGate"
       s=BertGate.Client.connect("localhost")
