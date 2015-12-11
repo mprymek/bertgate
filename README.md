@@ -26,7 +26,7 @@ For testing:
 
 For mix.exs:
 ```elixir
-{ :bertgate, github: "mprymek/bertgate" }
+{ :bert_gate, github: "mprymek/bertgate" }
 ```
 
 
