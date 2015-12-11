@@ -25,12 +25,12 @@ defmodule BertGate.Server do
    def stop,   do: :gen_server.cast(__MODULE__,:stop)
    def reload, do: :gen_server.cast(__MODULE__,:reload)
 
-   def init([options]) when is_map(options) do
+   def init([options]) do
       :ok = Application.ensure_started :ranch
-      port = Map.get(options,:port,9484)
-      allowed = Map.get(options,:public,[:'Bert'])
-      authenticator = Map.get(options,:authenticator,fn _,_,_ -> nil end)
-      acceptors_num = Map.get(options,:acceptors_num,20)
+      port = Dict.get(options,:port,9484)
+      allowed = Dict.get(options,:public,[:'Bert'])
+      authenticator = Dict.get(options,:authenticator,fn _,_,_ -> nil end)
+      acceptors_num = Dict.get(options,:acceptors_num,20)
       Logger.info "BertGate server listening on port #{port} with #{acceptors_num} acceptors"
       Logger.info "Public modules: #{inspect allowed}"
       :ranch.start_listener(:bert_gate_server, acceptors_num, :ranch_tcp,
