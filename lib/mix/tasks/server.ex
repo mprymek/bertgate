@@ -3,8 +3,15 @@ defmodule Mix.Tasks.Server do
 
   @shortdoc "Run BERTGate server"
 
-  def run([]) do
-     BertGate.Server.init [%{}]
+  def run(argv) do
+     opts = case OptionParser.parse argv do
+       {opts,[],[]} ->
+         public = Dict.get(opts,:public,"")
+         |> String.split(",")
+         |> Enum.map(fn mod -> mod |> String.to_atom end)
+         opts |> Keyword.put(:public,public)
+     end
+     BertGate.Server.init [opts]
      receive do
      end
   end
