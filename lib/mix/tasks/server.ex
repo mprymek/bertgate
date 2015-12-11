@@ -5,8 +5,17 @@ defmodule Mix.Tasks.Server do
 
   def run(argv) do
      opts = case OptionParser.parse argv do
-       {opts,[],[]} ->
-         public = Dict.get(opts,:public,"")
+       {opts,[],[]} -> opts
+       _ -> raise "Usage: mix server [--port PORT] [--public Module1,Module2]"
+     end
+     opts = case opts[:port] do
+       nil -> opts
+       port -> opts |> Keyword.put(:port,String.to_integer(port))
+     end
+     opts = case opts[:public] do
+       nil -> opts
+       pubspec ->
+         public = pubspec
          |> String.split(",")
          |> Enum.map(fn mod -> mod |> String.to_atom end)
          opts |> Keyword.put(:public,public)
