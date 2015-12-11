@@ -10,7 +10,7 @@ defmodule BertGate.Client do
    alias BertGate.Client.State
 
    def connect(host,options\\%{}) do
-      port = Map.get(options,:port,9484)
+      port = Dict.get(options,:port,9484)
       Logger.info "Connecting to #{inspect host}:#{port}"
       case :gen_tcp.connect(String.to_char_list(host), port, [:binary,{:packet,4},{:active, false}]) do
          {:ok, socket} ->
