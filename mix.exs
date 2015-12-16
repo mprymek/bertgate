@@ -4,7 +4,7 @@ defmodule BertGate.Mixfile do
   def project do
     [app: :bert_gate,
      version: "0.1.0",
-     elixir: "~> 1.0.0",
+     elixir: "~> 1.1",
      deps: deps]
   end
 
@@ -12,7 +12,7 @@ defmodule BertGate.Mixfile do
   #
   # Type `mix help compile.app` for more information
   def application do
-    [applications: [:ranch]]
+    [applications: [:ranch,:logger]]
   end
 
   # Dependencies can be hex.pm packages:
