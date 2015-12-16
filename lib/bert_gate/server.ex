@@ -128,9 +128,7 @@ defmodule BertGate.Server.Proto do
             #{:error,{:user,601,Map.get(err,:__struct__),err.message,err}}
             error_trace = System.stacktrace
             Logger.error "#{Map.get(err,:__struct__)}: #{Map.get(err,:__message__)}\n#{Exception.format_stacktrace(error_trace)}"
-            # {:error,{:user,601,Map.get(err,:__struct__),err,[]}}
-            # {:error, {:user, 601, Map.get(err,:__struct__), err, error_trace |> Enum.map &Exception.format_stacktrace_entry(&1)}}
-            {:error, {:user, 601, Map.get(err,:__struct__), "#{Map.get(err,:__struct__)}: #{Map.get(err,:__message__)}\n#{Exception.format_stacktrace(error_trace)}", []}}
+            {:error, {:user, 601, Map.get(err,:__struct__), err, error_trace |> Enum.map(&Exception.format_stacktrace_entry(&1))}}
          #err in UndefinedFunctionError ->
          #   {:error,{:protocol,404,"BERTError",inspect(err),[]}}
          #err ->
