@@ -30,7 +30,7 @@ defmodule BertGate.Mixfile do
       _ -> "make"
     end
     [
-      {:ranch, "> 1.0.0", compile: gnu_make},
+      {:ranch, ">= 1.3.0", compile: gnu_make},
     ]
   end
 end
