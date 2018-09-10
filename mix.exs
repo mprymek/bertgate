@@ -3,9 +3,9 @@ defmodule BertGate.Mixfile do
 
   def project do
     [app: :bert_gate,
-     version: "0.1.0",
-     elixir: "~> 1.1",
-     deps: deps]
+     version: "0.1.1",
+     elixir: "~> 1.6",
+     deps: deps()]
   end
 
   # Configuration for the OTP application
@@ -27,10 +27,10 @@ defmodule BertGate.Mixfile do
   defp deps do
     gnu_make = case System.cmd "uname", [] do
       {"FreeBSD\n",0} -> "gmake"
-      other -> "make"
+      _ -> "make"
     end
     [
-      {:ranch, "1.0.0", compile: gnu_make},
+      {:ranch, "> 1.0.0", compile: gnu_make},
     ]
   end
 end
