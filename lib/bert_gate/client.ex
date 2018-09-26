@@ -10,9 +10,9 @@ defmodule BertGate.Client do
    alias BertGate.Client.State
 
    def connect(host,options\\%{}) do
-      port = Dict.get(options,:port,9484)
+      port = options |> Map.get(:port,9484)
       Logger.info "Connecting to #{inspect host}:#{port}"
-      case :gen_tcp.connect(String.to_char_list(host), port, [:binary,{:packet,4},{:active, false}]) do
+      case :gen_tcp.connect(String.to_charlist(host), port, [:binary,{:packet,4},{:active, false}]) do
          {:ok, socket} ->
            {:ok, pid} = GenServer.start_link(BertGate.Client.Impl, %State{host: host, port: port, socket: socket})
            pid
@@ -54,6 +54,10 @@ defmodule BertGate.Client.Impl do
    use GenServer
    alias BertGate.Client.State
 
+   def init(args) do
+     {:ok, args}
+   end
+
    def handle_call({:call,mod,fun,args,timeout},_,s=%State{socket: socket}) do
       res = try do
         res = call_(socket,mod,fun,args,timeout)
@@ -84,7 +88,7 @@ defmodule BertGate.Client.Impl do
       recv_packet(socket,timeout)
    end
 
-   defp cast_(socket,mod,fun,args\\[]) do
+   defp cast_(socket,mod,fun,args) do
       :ok = send_packet(socket,{:cast,mod,fun,args})
       :ok
    end
@@ -107,7 +111,7 @@ defmodule BertGate.Client.Impl do
                # exception raised by user function
                {:error,{:user,601,_,err,_}} ->
                   raise err
-               {:error, {type, code, class, detail, backtrace}=err} ->
+               {:error, {type, code, class, detail, backtrace}} ->
                   raise BERTError, type: type, code: code, class: class, detail: detail, backtrace: backtrace
                any ->
                   raise "Bad reply: #{inspect(any)}"

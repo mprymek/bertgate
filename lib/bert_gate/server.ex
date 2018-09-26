@@ -27,10 +27,10 @@ defmodule BertGate.Server do
 
    def init([options]) do
       :ok = Application.ensure_started :ranch
-      port = Dict.get(options,:port,9484)
-      allowed = Dict.get(options,:public,[:'Bert'])
-      authenticator = Dict.get(options,:authenticator,fn _,_,_ -> nil end)
-      acceptors_num = Dict.get(options,:acceptors_num,20)
+      port = options |> Map.get(:port,9484)
+      allowed = options |> Map.get(:public,[:'Bert'])
+      authenticator = options |> Map.get(:authenticator,fn _,_,_ -> nil end)
+      acceptors_num = options |> Map.get(:acceptors_num,20)
       Logger.info "BertGate server listening on port #{port} with #{acceptors_num} acceptors"
       Logger.info "Public modules: #{inspect allowed}"
       :ranch.start_listener(:bert_gate_server, acceptors_num, :ranch_tcp,

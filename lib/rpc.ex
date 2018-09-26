@@ -33,7 +33,7 @@ defmodule Rpc do
   def call(name,mod,fun,args\\[],timeout\\5000) when is_atom(mod) and is_atom(fun) and is_list(args) do
     case connection(name) do
       nil -> raise KeyError, [key: name, term: "servers list"]
-      cdef={:rpc,node,_} ->
+      {:rpc,node,_} ->
         case :rpc.call(node,mod,fun,args,timeout) do
            {:badrpc, reason} ->
               raise RpcError, error: reason
@@ -53,7 +53,7 @@ defmodule Rpc do
   def cast(name,mod,fun,args\\[]) do
     case connection(name) do
       nil -> raise KeyError, [key: name, term: "servers list"]
-      cdef={:rpc,node,_} ->
+      {:rpc,node,_} ->
         case :rpc.cast(node,mod,fun,args) do
            {:badrpc, reason} ->
               raise RpcError, error: reason
